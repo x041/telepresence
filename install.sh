@@ -7,6 +7,7 @@ set -o pipefail
 set -o nounset
 # set -o xtrace
 
+PREFIX="~/koz"
 echo "Installing Telepresence in ${PREFIX}"
 
 SRCDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

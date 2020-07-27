@@ -162,6 +162,7 @@ def setup_container(runner: Runner, args: Namespace) -> LaunchType:
             args.to_pod,
             args.from_pod,
             args.container_to_host,
+            args.also_proxy,
             env,
             ssh,
             mount_dir,
