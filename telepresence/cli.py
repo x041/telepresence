@@ -26,6 +26,22 @@ import telepresence
 from telepresence.runner import BackgroundProcessCrash, Runner
 from telepresence.utilities import dumb_print, random_name
 
+class ParseDict(argparse.Action):
+    """Converts key-value passed via cli args into a dict."""
+    def __call__(self, parser, namespace, values, option_string=None):
+        d = {}
+
+        if values:
+            for item in values:
+                split_items = item.split("=", 1)
+                key = split_items[
+                    0
+                ].strip()  # we remove blanks around keys, as is logical
+                value = split_items[1]
+
+                d[key] = value
+
+        setattr(namespace, self.dest, d)
 
 class PortMapping(object):
     """Maps local ports to listen to remote exposed ports."""
@@ -181,7 +197,6 @@ def absolute_path(value: str) -> Path:
     raise argparse.ArgumentTypeError(
         "Value must be an absolute filesystem path"
     )
-
 
 def parse_args(in_args: Optional[List[str]] = None) -> argparse.Namespace:
     """Create a new ArgumentParser and parse sys.argv."""
@@ -426,6 +441,30 @@ def parse_args(in_args: Optional[List[str]] = None) -> argparse.Namespace:
             "See https://docs.docker.com/compose/env-file/ for more "
             "information on the limitations of this format."
         )
+    )
+
+    parser.add_argument(
+        "--k8s-annotations",
+        metavar="KEY=VALUE",
+        nargs="+",
+        dest="k8sannotations",
+        help=(
+            "Set kubernetes annotations to be used in deployment template"
+            "specifically when used with --new-deployment. "
+        ),
+        action=ParseDict,
+    )
+
+    parser.add_argument(
+        "--k8s-labels",
+        metavar="KEY=VALUE",
+        nargs="+",
+        dest="k8slabels",
+        help=(
+            "Set kubernetes labels to be used in deployment template"
+            "specifically when used with --new-deployment. "
+        ),
+        action=ParseDict,
     )
 
     group = parser.add_mutually_exclusive_group()

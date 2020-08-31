@@ -151,8 +151,8 @@ spec:
       telepresence: {run_id}
   template:
     metadata:
-      labels:
-        telepresence: {run_id}
+      {annotations_field}labels:
+        {labels_field}telepresence: {run_id}
     spec:
       containers:
       - {env_field}image: {image_name}
@@ -174,7 +174,11 @@ def _get_deployment_yaml(
     image_name: str,
     service_account: str,
     env: Dict,
+    annotations: Dict,
+    labels: Dict,
 ) -> str:
+    annotations_field = ""
+    labels_field = ""
     service_account_field = ""
     if service_account:
         service_account_field = "serviceAccount: %s" % service_account
@@ -186,9 +190,34 @@ def _get_deployment_yaml(
             env_lines.append("          value: %s\n" % value)
         env_lines.append("        ")
         env_field = "".join(env_lines)
+    if annotations:
+        annotations_lines = ["annotations:\n"]
+        for key, value in annotations.items():
+            annotations_lines.append("        {key}: {value}\n".format(key=key, value=value))
+        annotations_lines.append("      ")
+        annotations_field = "".join(annotations_lines)
+    if labels:
+        labels_lines = []
+        for key, value in labels.items():
+            labels_lines.append("        {key}: {value}".format(key=key, value=value))
+        #env_lines.append("        ")
+        labels_field = "".join(labels_lines)
+
+    print(_deployment_template.format(
+        name=name,
+        run_id=run_id,
+        annotations_field=annotations_field,
+        labels_field=labels_field,
+        image_name=image_name,
+        env_field=env_field,
+        service_account_field=service_account_field,
+    ))
+
     return _deployment_template.format(
         name=name,
         run_id=run_id,
+        annotations_field=annotations_field,
+        labels_field=labels_field,
         image_name=image_name,
         env_field=env_field,
         service_account_field=service_account_field,
@@ -201,6 +230,8 @@ def create_new_deployment(
     expose: PortMapping,
     custom_nameserver: Optional[str],
     service_account: str,
+    annotations: Dict,
+    labels: Dict,
 ) -> Tuple[str, str]:
     """
     Create a new Deployment, return its name and Kubernetes label.
@@ -239,6 +270,8 @@ def create_new_deployment(
         get_image_name(runner, expose),
         service_account,
         env,
+        annotations,
+        labels,
     )
     try:
         runner.check_call(
