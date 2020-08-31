@@ -109,7 +109,7 @@ def setup_vpn(runner: Runner, args: Namespace) -> LaunchType:
         runner_, remote_info, env, _socks_port, ssh, _mount_dir, _pod_info
     ):
         return launch_vpn(
-            runner_, remote_info, command, args.also_proxy, env, ssh
+            runner_, remote_info, command, args.also_proxy, args.never_proxy, env, ssh
         )
 
     return launch
@@ -163,6 +163,7 @@ def setup_container(runner: Runner, args: Namespace) -> LaunchType:
             args.from_pod,
             args.container_to_host,
             args.also_proxy,
+            args.never_proxy,
             env,
             ssh,
             mount_dir,

@@ -70,7 +70,8 @@ def main() -> None:
 
 def proxy(config: typing.Dict[str, typing.Any]) -> None:
     """Start sshuttle proxy to Kubernetes."""
-    cidrs = config["cidrs"]
+    inclusions = config["include_cidrs"]
+    exclude_cidrs = config["exclude_cidrs"]
     expose_ports = config["expose_ports"]
     to_pod = config["to_pod"]
     from_pod = config["from_pod"]
@@ -88,6 +89,8 @@ def proxy(config: typing.Dict[str, typing.Any]) -> None:
 
     # Figure out IP addresses to exclude, from the incoming ssh
     exclusions = []
+    for cidr in exclude_cidrs:
+        exclusions.extend(["-x", cidr])
     netstat_output = runner.get_output(["netstat", "-n"])
     for line in netstat_output.splitlines():
         if not line.startswith("tcp") or "ESTABLISHED" not in line:
@@ -103,7 +106,7 @@ def proxy(config: typing.Dict[str, typing.Any]) -> None:
     assert exclusions, netstat_output
 
     # Start the sshuttle VPN-like thing:
-    sshuttle_cmd = get_sshuttle_command(ssh, "nat") + exclusions + cidrs
+    sshuttle_cmd = get_sshuttle_command(ssh, "nat") + exclusions + inclusions
     main_process = Popen(sshuttle_cmd, universal_newlines=True)
 
     # Start the SSH tunnels to expose local services:

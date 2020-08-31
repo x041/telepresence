@@ -16,7 +16,7 @@ from subprocess import CalledProcessError, TimeoutExpired
 from typing import List
 
 from telepresence.connect import SSH
-from telepresence.outbound.cidr import get_proxy_cidrs
+from telepresence.outbound.cidr import get_proxy_cidrs, k8s_resolve
 from telepresence.proxy import RemoteInfo
 from telepresence.runner import Runner
 
@@ -56,11 +56,21 @@ def dns_lookup(runner: Runner, name: str, timeout: int) -> bool:
 
 
 def connect_sshuttle(
-    runner: Runner, remote_info: RemoteInfo, hosts_or_ips: List[str], ssh: SSH
+    runner: Runner,
+    remote_info: RemoteInfo,
+    hosts_or_ips: List[str],
+    never_proxy: List[str],
+    ssh: SSH,
 ) -> None:
     """Connect to Kubernetes using sshuttle."""
     span = runner.span()
     sshuttle_method = "auto"
+    exclude_cidrs = k8s_resolve(runner, remote_info, never_proxy)
+
+    exclusions = []
+    for cidr in exclude_cidrs:
+        exclusions.extend(["-x", cidr])
+
     if runner.platform == "linux":
         # sshuttle tproxy mode seems to have issues:
         sshuttle_method = "nat"
@@ -70,7 +80,7 @@ def connect_sshuttle(
             # DNS proxy running on remote pod:
             "--to-ns",
             "127.0.0.1:9053",
-        ] + get_proxy_cidrs(runner, remote_info, hosts_or_ips),
+        ] + exclusions + get_proxy_cidrs(runner, remote_info, hosts_or_ips),
         keep_session=True,  # Avoid trouble with interactive sudo
     )
 

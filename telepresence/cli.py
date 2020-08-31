@@ -358,6 +358,17 @@ def parse_args(in_args: Optional[List[str]] = None) -> argparse.Namespace:
         )
     )
     parser.add_argument(
+        "--never-proxy",
+        dest="never_proxy",
+        action='append',
+        default=[],
+        help=(
+            "If you are using --method=container or --method=tcp-vpn, "
+            "use this to exclude specific remote IPs, IP ranges, or"
+            "hostnames from outgoing communication"
+        )
+    )
+    parser.add_argument(
         "--local-cluster",
         action='store_true',
         help=(

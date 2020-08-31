@@ -22,7 +22,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 from telepresence import TELEPRESENCE_LOCAL_IMAGE
 from telepresence.cli import PortMapping
 from telepresence.connect import SSH
-from telepresence.outbound.cidr import get_proxy_cidrs
+from telepresence.outbound.cidr import get_proxy_cidrs, k8s_resolve
 from telepresence.proxy import RemoteInfo
 from telepresence.runner import Runner
 from telepresence.utilities import find_free_port, random_name
@@ -112,6 +112,7 @@ def run_docker_command(
     from_pod: List[int],
     container_to_host: PortMapping,
     also_proxy: List[str],
+    never_proxy: List[str],
     remote_env: Dict[str, str],
     ssh: SSH,
     mount_dir: Optional[str],
@@ -145,7 +146,8 @@ def run_docker_command(
     # Start the network (sshuttle) container:
     name = random_name()
     config = {
-        "cidrs": get_proxy_cidrs(runner, remote_info, also_proxy),
+        "include_cidrs": get_proxy_cidrs(runner, remote_info, also_proxy),
+        "exclude_cidrs": k8s_resolve(runner, remote_info, never_proxy),
         "expose_ports": list(expose.local_to_remote()),
         "to_pod": to_pod,
         "from_pod": from_pod,
