@@ -199,8 +199,8 @@ def _get_deployment_yaml(
     if labels:
         labels_lines = []
         for key, value in labels.items():
-            labels_lines.append("        {key}: {value}".format(key=key, value=value))
-        #env_lines.append("        ")
+            labels_lines.append("{key}: {value}\n".format(key=key, value=value))
+            labels_lines.append("        ")
         labels_field = "".join(labels_lines)
 
     print(_deployment_template.format(
